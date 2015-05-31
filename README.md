@@ -4,7 +4,7 @@ Functional reactive programming introduction using ReactiveCocoa - By AshFurrow
 
 本书翻译自[FunctionalReactivePragrammingOniOS](http://leanpub.com/iosfrp)
 
-[Gitbook地址](https://www.gitbook.com/book/kevinhm/functionalreactivepragrammingonios/dashboard)
+[Gitbook地址](https://www.gitbook.com/book/kevinhm/functionalreactivepragrammingonios/details)
 
 >知识是人类进步的阶梯
 
