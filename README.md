@@ -1,4 +1,4 @@
-FunctionalReactivePragrammingOniOS
+iOS的函数式反应型编程
 ==
 Functional reactive programming introduction using ReactiveCocoa - By AshFurrow
 

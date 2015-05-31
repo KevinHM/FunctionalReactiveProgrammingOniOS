@@ -2,7 +2,7 @@
 * [introduction](README.md)
 * [致谢](chapter1/acknowledagements.md)
 * [理念](chapter2/philosophy.md)
- * [函数响应式编程](chapter2/functional_reactive_programming.md)
+ * [函数式反应型编程](chapter2/functional_reactive_programming.md)
  * [结论](chapter2/conclusion.md)
 * [用RXCollections进行函数式编程](chapter3/functional_programming_with_RXCollections.md)
  * [高阶函数](chapter3/Higher_Order_Functions.md)
