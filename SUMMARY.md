@@ -1,5 +1,4 @@
 #Summary
-
 * [introduction](README.md)
 * [致谢](chapter1/acknowledagements.md)
 * [理念](chapter2/philosophy.md)
@@ -30,7 +29,6 @@
  * [和FunctionalReactivePixels一起实践](chapter4/revisiting_functionalReactivePixels.md)
  * [网络层回访](chapter4/networking_layer_revisited.md)
  * [总结](chapter4/conclusion.md)
- 
 * [MVVM On iOS](chapter5/mvvm_on_ios.md)
  * [什么是MVVM](chapter5/what_is_mvvm.md)
  * [跟随FunctionalReactivePixels的脚步](chapter5/revisiting_functionalReactivePixels.md)
