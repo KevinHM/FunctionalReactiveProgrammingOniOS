@@ -18,7 +18,7 @@
 for (NSNumber *number in array) NSLog(@"%@",number);
 
 ```
-...这个等同于下面的高阶函数:
+。。。这个等同于下面的高阶函数:
 
 ```
 [array enumerateObjectsUsingBlock:^(NSNumber *number, NSUInteger idx, BOOL *stop)
