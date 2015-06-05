@@ -1,7 +1,7 @@
 # 使用RXCollections
-我的朋友RobRix使用OC写了一个优秀的高阶函数的库叫做[RXCollections](https://github.com/robrix/RXCollections) (译者注：目前这个项目作者已经停止维护，取而代之时RobRix的另外一个项目[Reducers](https://github.com/robrix/Reducers))
+我的朋友RobRix使用OC写了一个优秀的高阶函数的库叫做[RXCollections](https://github.com/robrix/RXCollections) (译者注：目前这个项目作者已经停止维护，取而代之是RobRix的另外一个项目[Reducers](https://github.com/robrix/Reducers))
 
-首先，我们需要一个可以展示的Xcode工程，创建一个新工程“Playground”。选择"Single View Application"作为模板。我们将在AppDelegate中展示绝大部分代码。在本书中，我将使用"FRP"作为我的类的前缀。
+首先，我们需要一个可以展示的Xcode工程，创建一个新工程“Playground”。选择"Single View Application"作为模板。我们将在AppDelegate中展示绝大部分代码。在本书中，我将使用"FRP"作为类的前缀。
 
 其次，我们需要在工程中导入RXCollections.我将使用Cocoapods导入这个库，这会让事情变得简单。使用如下命令以确保你的电脑里安装了最新的cocoapods。
 ```
@@ -55,7 +55,7 @@ pod install
 ```
 NSArray * array = @[ @1, @2 , @3 ];
 ```
-现在我们准备好开始染手函数式编程啦。
+好了，万事具备，开始染手函数式编程啦！
 
 
 
