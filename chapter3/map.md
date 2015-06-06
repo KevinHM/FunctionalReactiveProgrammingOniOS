@@ -31,6 +31,6 @@ for (NSNumber *number in array) [mutableArray addObject:@(pow([number integerVal
 NSArray *mappedArray = [NSArray arrayWithArray: mutableArray];
 
 ```
-代码显然更多，而且还有一个无用的局部变量`mutableArray`污染了我们的词法空间，简直是个毛线！
+代码显然更多，而且还有一个无用的局部变量`mutableArray`污染了我们的作用域，简直是个毛线！
 
 所以当你想把一个列表里的元素转化为另一个列表的元素时，你就能体会到映射的强大。
