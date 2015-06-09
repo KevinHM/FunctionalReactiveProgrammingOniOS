@@ -17,5 +17,7 @@
 
 信号是ReactiveCocoa的核心组件之一。ReactiveCocoa为UIKit的每一个控件内置了一套信号选择器。例如，UITextField就有一个`rac_textSignal`,UITextField中每一次按键的响应都会通过它发送出去。下一章我们会学习如何使用信号来执行任务。
 
+![signal Class diagram](https://github.com/KevinHM/FunctionalReactiveProgrammingOniOS/blob/master/chapter4/signal_class_Diagram.png)
 
+信号也可以被链接(链式调用)和转化。通过映射或者过滤一个流得到的新的流也可以随后被映射、被过滤，进行所有你能想到的各种操作。下一章我们将了解更多这方面的内容。
 
