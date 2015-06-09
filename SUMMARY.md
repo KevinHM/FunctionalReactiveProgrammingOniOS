@@ -9,7 +9,7 @@
  * [使用RXCollections](chapter3/installing_RXCollections.md)
  * [映射](chapter3/map.md)
  * [过滤](chapter3/filter.md)
- * [折叠](chapter3/fold,md)
+ * [折叠](chapter3/fold.md)
  * [性能](chapter3/performance.md)
  * [总结](chapter3/conclusion.md)
 * [ReactiveCocoa 简介](chapter4/introduction_to_reactivecocoa.md)
