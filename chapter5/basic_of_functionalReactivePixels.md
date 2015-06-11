@@ -1,0 +1,144 @@
+# FunctionalReactivePixels的基础知识
+FunctionReactivePixels将会是一个简单的观看'500px'中最受欢迎的照片的应用。一旦我们完成这一节，应用的主界面将会像下面这样：
+
+> 插入一个图片
+
+当然我们也可以像下图一样观看全屏模式下的图片。
+
+> 插入一个图片
+
+这个App将使用Collection Views。如果你没有太多这方面的经验，也不需要太过担心---他们(CollectionView)就像TableView一样，使用起来非常简单。如果你对UICollectionView感兴趣，可以阅读我的[另一本书](http://www.amazon.com/iOS-UICollectionView-Complete-Edition-Programming-ebook/dp/B00IHZKDCU).
+
+我们将使用CocoaPods来管理我们的依赖，现在创建一个新的工程。我喜欢使用空模版以便我可以完全控制viewController层级。
+
+首先、我们将创建一个UICollectionViewController的子类FRPGalleryViewController.同时我们创建一个UICollectionViewFlowLayout的子类FRPGalleryFlowLayout.
+
+```
+#import the new flow layout's header in the view controller's implementation file and
+#then override FRPGalleryViewController's init method
+
+- (id)init{
+    FRPGalleryFlowLayout *flowLayout = [[FRPGalleryFlowLayout alloc] init];
+    self = [self initWithCollectionViewLayout:flowLayout];
+    if(!self) return nil;
+    return self;
+}
+```
+
+这将初始化collection View的layout为我们自己的layout.这个flowlayout子类的实现非常简单，只需要设置一些属性就可以了。
+
+```
+@implementation FRPGalleryFlowLayout
+- (instancetype)init{
+    if (!(self = [super init])) return nil;
+
+    self.itemSize = CGSizeMake(145,145);
+    self.minimumInteritemSpacing = 10;
+    self.minimumLineSpacing = 10;
+    self.sectionInset = UIEdgeInsetsMake(10,10,10,10);
+
+    return self;
+}
+@end
+```
+
+很棒!下一步，我们需要把Viewcontroller展现在屏幕上。为了实现这个，我们首先要在应用的application delegate的`application: didFinishLaunchingWithOptions:`方法。我们想要将collectionview Controller置于一个navigationController容器中：
+
+```
+- (BOOL)application:(UIApplication *)application
+    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
+    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    self.window.rootViewController = [[UINavigationController alloc] initWithRootViewController:[[FRPGalleryViewController alloc] init]];
+
+    self.window.backgroundColor = [UIColor whiteColor];
+    [self.window makeKeyAndVisible];
+    return YES;
+}
+```
+很好!如果我们现在运行，我们将看到一个空视图。
+
+我们来填充一些内容。创建一个Podfile文件,并填写如下内容:
+```
+platform :ios, "7.0"
+target "FRP" do
+    pod 'ReactiveCocoa', '~> 2.1.4'
+    pod 'libextobjc', '~> 0.3'
+    pod '500-iOS-api', '~> 1.0.4'
+    pod 'SVProgressHUD', '~> 0.9'
+end
+
+target "FRPTests" do
+
+end
+```
+下一章，我们将添加一些测试。现在运行`pod install`,然后打开Xcode通用的`workspace`文件。打开与编译头文件`FRP-Prefix.pch`(Xcode6之后，新建工程默认不加载pch文件，需要自己添加，Apple的最佳实践中已经不推荐使用全局的预编译pch文件)，然后添加下面的内容。这些语义会自动加载到项目的所有文件中。
+```
+//Pods
+#import <ReactiveCocoa/ReactiveCocoa.h>
+#import <500px-iOS-api/PXAPI.h>
+#import <libextobjc/EXTScope.h>
+
+//App Delegate
+#import "FRPAppDelegate.h"
+#define AppDelegate ((FRPAppDelegate *)[[UIApplication sharedApplication] delegate])
+```
+对于这样使用AppDelegate单例的用法，Saul Mora说：“每次看到你这么做，我家的狗都想死”。
+但是这不是一本关于设计模式的书---这是一本关于ReactiveCocoa的书，所以我们可能要害死一些狗狗。。。
+
+创建一个AppDelegate的属性来hold住500px API客户端
+
+```
+@property (nonatomic, readonly) PXAPIHelper * apiHelper;
+```
+在`application:didFinishLaunchingWithOptions:`方法中实例化这个变量。
+```
+self.apiHelper = [[PXAPIHelper alloc]
+                    initWithHost:nil
+                    consumerKey:@"DC2To2BS0ic1ChKDK15d44M42YHf9gbUJgdFoF0m"
+                    consumerSecret:@"i8WL4chWoZ4kw9fh3jzHK7XzTer1y5tUNvsTFNnB"];
+```
+我提供了一对一次性消费的密钥---请不要疯到你也使用这对密钥，你可以[申请](https://500px.com/)自己的。
+
+好了，我们差不多也该建立数据的加载了。我们需要一个数据模型来hold住我们的信息。我创建了下面的`FRPPhotoModel`。
+```
+@interface FRPPhotoModel : NSObject
+@property (nonatomic, strong) NSString *photoName;
+@property (nonatomic, Strong) NSNumber *identifier;
+@property (nonatomic, strong) NSString *photographerName;
+@property (nonatomic, strong) NSNumber *rating;
+@property (nonatomic, strong) NSString *thumbnailURL;
+@property (nonatomic, strong) NSData *thumbnailData;
+@property (nonatomic, strong) NSString *fullsizedURL;
+@property (nonatomic, strong) NSData * fullsizedData;
+
+
+@end
+
+@implementation FRPPhotoModel
+
+@end
+```
+
+非常好，到这里，我们将不直接在ViewController中加载内容，相反，这部分逻辑将被抽象到另一个类中。创建一个名为`FRPPhotoImporter`的类。
+
+到现在为止没有一处代码是关于函数式的。别担心，我们就要这么做了！这个`FRPPhotoImporter`将不会真正返回一个`FRPPhotoModel`对象，相反他会返回一些随身携带API最新的请求结果的信号。
+
+```
+@interface FRPPhotoImporter : NSObject
++ (RACSignal *)importPhotos;
+
+@end
+```
+`FRPPhotoImporter`的`importPhotos`方法返回一个从API发送最新结果的RACSignal。这个RACSignal实际上是一个RACReplaySubject.但是由于ReactiveCocoa编程指南中不建议使用RACSubjects，我们申明的公共接口的返回类型为RACSignal而非RACSubject.现在让我们继续往下看:
+
+```
++ (RACSignal *)importPhotos{
+    RACReplaySubject * subject = [RACReplaySubject subject];
+    NSURLRequest * request = [self popularURLRequest];
+    
+
+}
+```
+
+
+
