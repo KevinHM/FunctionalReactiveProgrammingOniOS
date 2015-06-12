@@ -370,9 +370,60 @@ static NSString * CellIdentifier = @"Cell";
 
 在Objective-C的ARC条件下@weakify/@strongify这个双人舞是非常常见的。@weakify创建一个新的self的弱引用weakself，@strongify创建这个weakself的强引用，并在@strongify的作用域中起作用。当strongify的这种做法，一般称为“影子变量”，那是因为这个新的强引用的变量就叫`self`,替代了原本强引用的self.
 
+一般而言，`subscribeNext:`的block将捕获其词法范围内的self，造成self和block之间的循环引用。block被`subscribeNext:`的返回值，一个RACSubscriber实例，强引用，然后被RACObserver宏捕获。解除分配时，RACOberver会自动解除第一个参数的分配，这样的话self就应该被解除分配，但self被block强引用，self要得以解除分配的唯一条件即引用计数为0，这样的话就必须先解除block的分配，而前面的分析我们知道block被RACSubscriber实例引用，而该实例默认被self强引用，因此，如果不调用weakify/strongify，self就永远也不可能解除分配。
 
+最后，我们实际来调用`loadPopularPhotos`(他的实现如下)
 
+```
+- (void)loadPopularPhotos{
+	[[FRPPhotoImporter importPhotos] subscribeNext:^(id x){
+		self.photosArray = x;
+	} error:^(NSError * error){
+		NSLog(@"Couldn't fetch photofrom 500px: %@",error);
+	}];
+}
+```
 
+这个方法实际上负责调用`FRPPhotoImporter`的`importPhotos`方法（现在请加上他的头文件），他订阅了我们私有成员属性的结果。由于UICollectionViewDataSource协议的架构，我们不得不把这些状态引入进来。
+
+现在让我们来看一下这些协议方法，有两个是必须的，实现如下：
+
+```
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+	return self.photosArray.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+	FRPCell * cell = [collectionView dequeueReusableCellWithReuseIdentifier:CellIdentifier forIndexPath:indexPath];
+	[cell setPhotoModel:self.photosArray[indexPath.row]];
+	
+	return cell;
+}
+```
+
+第一个方法简单地返回了collectionView中的cell的数量，在这里，准确地讲是photosArray属性的cell数量。接下来的这个方法从collectionView列表中获得了一个cell实例，并调用其上的`setPhotoModel:`方法（这个我们还没有实现，但别担心）。这些代码应该看起来非常熟悉，如果你曾经处理过UITableViewDataSource的方法的话。
+
+这就是我们`ViewController`完整的实现。现在我们来创建UICollectionViewCell的子类，命名为`FRPCell`,像下面这样来修改他的头文件。
+
+```
+@class FRPPhotoModel;
+
+@interface FRPCell : UICollectionViewCell
+- (void)setPhotoModel:(FRPPhotoModel *)photoModel;
+@end
+```
+
+在实现文件中添加下面的私有扩展：
+
+```
+#import "FRPPhotoModel.h"
+@interface FRPCell ()
+@property (nonatomic , strong ) UIImageView * imageView;
+@property (nonatomic , strong ) RACDisposeable *subscription;
+
+@end
+```
+ 
 
 
 
