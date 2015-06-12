@@ -221,6 +221,20 @@ else{
 	[subject sendError:connectionError];
 }
 ```
+测试是否有数据返回时，可以说这不是一个很好的错误条件检测的方法，但这是一个教学的例子。如果数据为`nil`,我们会发送一个`errorValue`,否则我们会反序列化`JSON`数据并处理它。这不太容易很快就看清楚是怎么做到的，让我们来仔细看看。
+
+```
+[subject sendNext:[[[results[@"photos"] rac_sequence] map:^id (NSDictionary *photoDictionary){
+	FRPPhotoModel * model = [FRPPhotoModel new];
+	[self configurePhotoModel:model withDictionary:photoDictionary];
+	[self downloadThumbnailForPhotoModel:model];
+	return model;
+}] array]];
+
+[subject sendCompleted];
+
+```
+
 
 
 
