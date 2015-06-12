@@ -418,13 +418,63 @@ static NSString * CellIdentifier = @"Cell";
 ```
 #import "FRPPhotoModel.h"
 @interface FRPCell ()
-@property (nonatomic , strong ) UIImageView * imageView;
+@property (nonatomic , weak ) UIImageView * imageView;
 @property (nonatomic , strong ) RACDisposeable *subscription;
 
 @end
 ```
  
+这里有两个属性：一个图片视图和一个订阅者。图片视图是弱引用，因为它属于父视图（这是UICollectionViewCell的一个标准的用法），我们将实例化并赋值给imageView。接下来的属性是一个订阅，当使用ReactiveCocoa来设置图像视图的图像属性时，我们将接触到它。注意它必须是强引用而非弱引用否则你会得到一个运行时的异常。
 
+```
+- (id)initWithFrame:(CGRect)frame{
+	self = [super initWithFrame:frame];
+	if(!self) return nil;
+	
+	//Configure self
+	self.backgroundColor = []UIColor darkGrayColor];
+	
+	//Configure subviews
+	UIImageView * imageView = [[UIImageView alloc] initWithFrame:self.bounds];
+	imageView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+	[self.contentView addsubView:imageView];
+	self.imageView = imageView;
+	
+	return self;
+}
+```
+标准的UICollectionView子类的模版会创建并分配imageView属性。注意，我们必须有一个（被self）强引用的本地变量作为中介来存储imageView，这样就不会在赋值给self的imageView属性的时候，imageView被立即解除分配。否则会有编译错误。
 
+完成我们的500px画廊，我们还需要实现两个方法，第一个就是`setPhotoModel:`方法
 
+```
+- (void)setPhotoModel:(FRPPhotoModel *)photoModel{
+	self.subscription = [[[RACObserver(photoModel, thumbnailData) 
+		filter:^ BOOL (id value){
+			return value != nil;
+		}] map:^id (id value){
+			return [UIImage imageWithData:value];
+		}] setKeyPath:@keypath(self.imageView, image) onObject:self.imageView];
+}
+```
+这种方法来给订阅的属性赋值，我们老早就知道了。它把`setKeyPath:OnObject:`的返回值赋给了`self.subscription`.实践中这种方法根本不使用，我们使用RAC的C语法宏来代替，不久之后我们就会涉及这方面的知识。
 
+两个原因导致订阅是必要的：
+
+	1. 当它没有接受一个新的值时，我们想延迟处理。
+	2. 信号的订阅通常是冷信号，除非有人订阅他（信号），否则信号不会起作用。
+	
+`setKeyPath:onObject:`是`RACSignal`的一个方法：绑定最新的信号的值给对象的关键路径。在这里我们在一个级联的信号上调用了这个方法，让我们来仔细看看：
+
+```
+[[RACObserver (photoModel, thumbnailData) 
+	filter:^BOOL (id value){
+		return value != nil;
+	}] map:^ id (id value){
+		return [UIImage imageWithData:value];
+	}];
+```
+
+> 插入一个插图
+
+Page47--待续
