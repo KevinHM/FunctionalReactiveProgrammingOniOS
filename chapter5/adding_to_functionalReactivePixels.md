@@ -101,4 +101,181 @@
 	[self.view addSubView:self.pageViewController.view];
 }
 ```
-我要指出的是，简便起见，在我的应用里我禁用了横向展示，因为这不是一本关于`autoresizingMask`或者`autoLayout`的书。你可以通过[Eria Sadun的书]()了解更多关于`autoLayout`方面的细节。
+我要指出的是，简便起见，在我的应用里我禁用了横向展示，因为这不是一本关于`autoresizingMask`或者`autoLayout`的书。你可以通过[Eria Sadun的书](http://www.amazon.com/Layout-Demystified-Edition-Mobile-Programming/dp/0321967194)了解更多关于`autoLayout`方面的细节。
+
+下面我们来了解一下UIPageViewController的数据源协议和代理协议。
+
+```
+- (void)pageViewController:(UIPageViewController *)pageViewController
+	didFinishAnimating: (BOOL)finished
+	previousViewControllers:(NSArray *)previousViewControllers
+	transitionCompleted:(BOOL)completed{
+		self.title = [[self.pageViewController.viewControllers.firstObject photoModel] photoName];
+		[self.delegate userDidScroll:self toPhotoAtIndex:[self.pageViewController.viewControllers.firstObject photoIndex]];
+	}
+	
+- (UIViewController *)pageViewController:(UIPageViewController *)pageViewController viewControllerBeforeViewController:(FRPPhotoViewController *)viewController{
+	return [self photoViewControllerForIndex:viewController.photoIndex - 1];
+}
+
+- (UIViewController *)pageViewController:(UIPageViewController *)pageViewController viewControllerAfterViewController:(FRPPhotoViewController *)viewController {
+	return [self photoViewControllerForIndex:viewController.photoIndex + 1];
+}
+
+```
+虽然这些方法没有技术上的`reactive`，却体现出一定意义上的实用性。我很佩服这种在特殊类型的视图控制器上的抽像，干得漂亮，Apple！
+
+我们的视图控制器创建方法，类似下面这样：
+
+```
+- (FRPPhotoViewController *)photoViewControllerForIndex:(NSInteger)index{
+	if (index >= 0 && index < self.photoModelArray.count){
+		FRPPhotoModel *photoModel = self.photoModelArray[index];
+		
+		FRPPhotoViewController *photoViewController = [[FRPPhotoViewController alloc] initWithPhotoModel:photoModel index:index];
+		
+		return photoViewController;
+	}
+	
+	//Index was out of bounds, return nil
+	return nil;
+ }
+```
+它基本上创建比配置了一个我们将要使用的UIViewController的子视图控制器FRPPhotoViewController。下面是他的头文件：
+
+```
+@class FRPPhotoModel;
+
+@interface FRPPhotoViewController : UIViewController
+- (instancetype)initWithPhotoModel:(FRPPhotoModel *)photoModel index:(NSInteger)photoIndex;
+
+@property (nonatomic, readonly) NSInteger photoIndex;
+@property (nonatomic, readonly) FRPPhotoModel * photoModel;
+ 
+@end
+
+```
+这个视图控制器非常简单：显示一个photoModel下的高清图片，并提示photoImporter(单例对象)下载这个图片。它是如此简单，我现在就告诉你它的全部实现。
+
+```
+//Model
+#import "FRPPhotoModel.h"
+
+//Utilities
+#import "FRPPhotoImporter.h"
+#import <SVProgressHUD.h>
+
+@interface FRPPhotoViewController ()
+//Private assignment
+@property (nonatomic, assign) NSInteger photoIndex;
+@property (nonatomic, strong) FRPPhotoModel *photoModel;
+
+//Private properties
+@property (nonatomic, weak) UIImageView * imageView;
+
+@end
+
+@implementation FRPPhotoViewController
+
+- (instancetype)initWithPhotoModel:(FRPPhotoModel *)photoModel index:(NSInteger)photoIndex{
+	self = [self init];
+	if (!self) return nil;
+	
+	self.photoModel = photoModel;
+	self.photoIndex = photoIndex;
+	
+	return self;
+}
+
+- (void)viewDidLoad{
+	[super viewDidLoad];
+	
+	//Configure self's view
+	self.view.backGroundColor = [UIColor blackColor];
+	
+	//Configure subViews
+	UIImageView *imageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
+	
+	RAC(imageView, image) = [RACObserve(self.photoModel, fullsizeData) map:^id (id value){
+										return [UIImage imageWithData:value];
+									}];
+	
+	imageView.contentMode = UIViewContentModeScaleAspectFit;
+	[self.view addSubView:imageView];
+	self.imageView = imageView;
+}
+
+- (void)viewWillAppear:(BOOL)animated{
+	[super viewWillAppear:animated];
+	[SVProgressHUD show];
+	
+	//Fetch data
+	[[FRPPhotoImporter fetchPhotoDetails:self.photoModel] 
+			subscribeError:^(NSError *error){
+				[SVProgressHUD showErrorWithStatus:@"Error"];
+			} 
+			completed:^{
+				[SVProgressHUD dismiss];
+			}];
+}
+
+@end
+
+```
+就像我们的collectionViewCell中那样，我们将UIImageView的image属性和数据模型的某个属性映射后的值绑定，所不同的是ViewController不需要考虑复用，所以我们不必计较怎么取消imageView的订阅---当imageView对象解除分配的时候，订阅将会被取消。
+
+这个实现里面另一个有趣的部分在`viewWillAppear:`里：
+
+```
+[SVProgressHUD show];
+//Fetch data
+[[FRPPhotoImporter fetchPhotoDetails:self.photoModel] 
+		subscribeError:^(NSError * error){
+			[SVProgressHUD showErrorWithStatus:@"Error"];
+		} 
+		completed:^{
+			[SVProgressHUD dismiss];
+		}];
+```
+没有收到错误或者完成信息之前，我们必须给用户展示网络请求的状态。你看，500px的受欢迎的照片的API接口只返回了一个照片的大概信息，但我们需要这个照片更详细的信息，所以我们必须调用第二个API接口来获取每一个照片的详细信息（包括全尺寸照片的URL）。
+
+```
++ (NSURLRequest *)photoURLRequest:(FRPPhotoModel *)photoModel{
+	return [AppDelegate.apiHelper urlRequestForPhotoID:photoModel.identifier.integerValue];
+}
+```
+
+我们还没有实现`fetchPhotoDetails:`方法，所以现在我们回到`FRPPhotoImporter`中，在头文件中定义这个方法，在实现文件中实现它。
+
+```
++ (RACReplaySubject *)fetchPhotoDetails:(FRPPhotoModel *)photoModel {
+	RACReplaySubject * subject = [RACReplaySubject subject];
+	NSURLRequest *request = [self photoURLRequest:photoModel];
+	
+	[NSURLConnection sendAsynchronousRequest:request 
+		queue:[NSOperationQueue mainQueue] 
+		completionHandler:^ (NSURLResponse *response, NSData * data, NSError *connectionError){
+			if(data){
+				id results = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil][ @"photo" ];
+				
+				[self configurePhotoModel:photoModel withDictionary:results];
+				[self downloadFullsizedImageForPhotoModel:photoModel];
+				
+				[subject sendNext:photoModel];
+				[subject sendCompleted];
+			}
+			else{
+				[subject sendError:connectionError];
+			}
+		}];
+		
+	return subject;
+}
+```
+
+这种方法跟前面我们看到的`importPhotos`方法模式一样，我们的`downloadFullsizedImageForPhotoModel:`方法跟`downloadThumbnailForPhotoModel:`方法也是一样的。除了这两者之外，还有什么重要的抽象方法呢？让我们来完成我们的缩略图方法。
+
+```
+--待续 page56
+```
+
