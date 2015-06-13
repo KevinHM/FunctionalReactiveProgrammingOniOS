@@ -1,7 +1,7 @@
 # Node rules:
 ## Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
-.DS_Store
+
 ## Dependency directory
 ## Commenting this out is preferred by some people, see
 ## https://docs.npmjs.com/misc/faq#should-i-check-my-node_modules-folder-into-git
@@ -14,3 +14,51 @@ _book
 *.epub
 *.mobi
 *.pdf
+
+# Mac OS X
+.DS_Store
+.VolumeIcon.icns
+.fseventsd
+Icon
+
+
+# Xcode
+build/*
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.xcworkspace
+!default.xcworkspace
+!xcshareddata
+xcuserdata
+profile
+*.moved-aside
+
+# Build products
+build/
+*.o
+
+# No other repo directories
+.svn
+.hg
+CVS
+
+# No Sparkle private keys
+dsa_priv.pem
+
+# Python
+*.pyc
+
+# No Backup Files
+*~.nib
+*.swp
+*~
+*(Autosaved).rtfd/
+Backup[ ]of[ ]*.pages/
+Backup[ ]of[ ]*.key/i
+Backup[ ]of[ ]*.numbers/
