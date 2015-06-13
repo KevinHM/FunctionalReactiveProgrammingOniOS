@@ -276,6 +276,38 @@
 这种方法跟前面我们看到的`importPhotos`方法模式一样，我们的`downloadFullsizedImageForPhotoModel:`方法跟`downloadThumbnailForPhotoModel:`方法也是一样的。除了这两者之外，还有什么重要的抽象方法呢？让我们来完成我们的缩略图方法。
 
 ```
---待续 page56
++ (void)downloadThumbnailForPhotoModel:(FRPPhotoModel *)photoModel {
+	[self download:photoModel.thumbnailURL withCompletion:^(NSData *data){
+		photoModel.thumbnailData = data;
+	}];
+}
+
++ (void)downloadFullsizedImageForPhotoModel:(FRPPhotoModel *)photoModel {
+	[self download:photoModel.fullsizedURL withCompletion:^(NSData * data){
+		photoModel.fullsizedData = data;
+	}];
+}
+
++ (void)downloadFullsizedImageForPhotoModel:(FRPPhotoModel *)photoModel {
+	[self download:photoModel.fullsizedURL withCompletion:^(NSData *data){
+		photoModel.fullsizedData = data;
+	}];
+}
+
++ (void)download:(NSString *)urlString withCompletion:(void(^)(NSData * data))completion{
+	NSAssert(urlString, @"URL must not be nil" );
+	
+	NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:urlString]];
+	[NSURLConnnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError){
+		if (completion){
+			completion(data);
+		}
+	}];
+}
+
 ```
+我曾经与这样一位客户工作过，他认为如果你某行一样的代码重复写两次，这代码就应该得到某种程度的抽象。虽然我认为这有点偏激，但我喜欢这种态度。
+
+好了。我们现在可以运行这个应用，点击一个图片去查看它的高清图片。我们也可以向前或者向后滑动来查看前一个或后一个高清图片。非常棒！
+
 
