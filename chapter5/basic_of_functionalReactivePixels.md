@@ -145,30 +145,30 @@ self.apiHelper = [[PXAPIHelper alloc]
 + (RACSignal *)importPhotos{
     RACReplaySubject * subject = [RACReplaySubject subject];
     NSURLRequest * request = [self popularURLRequest];
-    [NSURLConnection sendAsynchronousRequest:request 
-    								queue:[NSOperationQueue mainQueue] 
+    [NSURLConnection sendAsynchronousRequest:request
+    								queue:[NSOperationQueue mainQueue]
     					completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError){
     						if (data) {
     							id results = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-    							
+
     							[subject sendNext:[[[results[@"photos"] rac_sequence] map:^id(NSDictionary *photoDictionary){
     								FRPPhotoModel * model = [FRPPhotoModel new];
-    							
+
     								[self configurePhotoModel:model withDictionary:photoDictionary];
     								[self downloadThumbnailForPhotoModel:model];
-    							
+
     								return model;
     							}] array];
-    							
+
     							[subject sendCompleted];
     						}
     						else{
     							[subject sendError:connectionError];
     						}
     }];
-    
+
     return subject;
-    
+
 }
 ```
 
@@ -184,7 +184,7 @@ self.apiHelper = [[PXAPIHelper alloc]
 
 这是你看到的异步操作中，一个非常普通的模式。
 
-1. 创建一个RACSubject. 
+1. 创建一个RACSubject.
 2. 从异步调用的完成block中向RACSubject传送结果值。
 3. 立即返回这个RACSubject对象
 
@@ -196,10 +196,10 @@ URL请求的构造方法看起来应该是这样的:
 
 ```
 + (NSURLRequest *)popularURLRequest {
-	return [AppDelegate.apiHelper urlRequestForPhotoFeature:PXAPIHelperPhotoFeaturePopular 
+	return [AppDelegate.apiHelper urlRequestForPhotoFeature:PXAPIHelperPhotoFeaturePopular
 				resultsPerPage:100 page:0 
-				photoSize:PXPhotoModelSizeThumbnail 
-				sortOrder:PXAPIHelperSortOrderRating 
+				photoSize:PXPhotoModelSizeThumbnail
+				sortOrder:PXAPIHelperSortOrderRating
 				except:PXPhotoModelCategoryNude];
 }
 ```
@@ -211,10 +211,10 @@ if(data){
 	[subject sendNext:[[[results[@"photos"] rac_sequence] map:^id (NSDictionary *photoDictionary){
 		FRPPhotoModel *model = [FRPPhotoModel new];
 		[self donwloadThumbnailForPhotoModel:model];
-		
+
 		return model;
 	}] array]];
-	
+
 	[subject sendCompleted];
 }
 else{
@@ -263,9 +263,9 @@ else{
 	photomodel.identifier = dictionary[@"id"];
 	photomodel.photographerName = dictionary[@"user"][@"username"];
 	photomodel.rating = dictionary[@"rating"];
-	
+
 	photomodel.thumbnailURL = [self urlForImageSize:3 inArray:dictionary[@"images"]];
-	
+
 	//Extended attributes fetched with subsequent request
 	if (dictionary[@"comments_count"]){
 		photomodel.fullsizedURL = [self urlForImageSize:4 inArray:dictionary[@"images"]];
@@ -299,7 +299,7 @@ else{
  - 第一步，我们过滤掉那些`size`字段不匹配要求的字典。
  - 然后，将这些符合要求的字典做一次映射来提取字典中`url`字段的内容。
  - 最后，我们获得一个NSString 对象的序列，把它转化为数组，然后返回`firstObject`.
- 
+
 > 这里插图一个
 
 在ReactiveCocoa中类似上面的链式调用非常常见。值从`rac_sequence`推送到`filter:`方法中，最后推送到`map:`方法里。最后调用序列`rac_sequence`的`array`方法，将序列的结果转化为`array`.
@@ -309,10 +309,10 @@ else{
 ```
 + (void)downloadThumbnailForPhotoModel:(FRPPhotoModel *)photoModel{
 	NSAssert(photoModel.thumbnailURL, @"Thumbnail URL must not be nil");
-	
+
 	NSURLRequest * request = [NSURLRequest requestWithURL:[NSURL URLWithString:photoModel.ThumbnailURL]];
-	[NSURLConnection sendAsynchronousRequest:request 
-		queue:[NSOperationQueue mainQueue] 
+	[NSURLConnection sendAsynchronousRequest:request
+		queue:[NSOperationQueue mainQueue]
 		completionHandler:^(NSURLResponse *response, NSData *data, NSError * connectionError){
 			photoModel.thumbnailData = data;
 	}];
@@ -336,20 +336,20 @@ static NSString * CellIdentifier = @"Cell";
 
 - (void)viewDidLoad{
 	[super ViewDidLoad];
-	
+
 	//Configure self
 	self.title = @"Popular on 500px";
-	
+
 	//Configure View
 	[self.collectionView registerClass:[FRPCell class] forCellWithReuseIdentifier:CellIdentifier];
-	
+
 	//Reactive Stuff
 	@weakify(self);
 	[RACObserver(self, photosArray) subscribeNext:^(id x){
 		@strongify(self);
 		[self.collectionView reloadData];
 	}];
-	
+
 	//Load data
 	[self loadPopularPhotos];
 }
@@ -370,10 +370,137 @@ static NSString * CellIdentifier = @"Cell";
 
 在Objective-C的ARC条件下@weakify/@strongify这个双人舞是非常常见的。@weakify创建一个新的self的弱引用weakself，@strongify创建这个weakself的强引用，并在@strongify的作用域中起作用。strongify的这种做法，一般称为“影子变量”，那是因为这个新的强引用的变量就叫`self`,替代了原本强引用的self.
 
+一般而言，`subscribeNext:`的block将捕获其词法范围内的self，造成self和block之间的循环引用。block被`subscribeNext:`的返回值，一个RACSubscriber实例，强引用，然后被RACObserver宏捕获。解除分配时，RACOberver会自动解除第一个参数的分配，这样的话self就应该被解除分配，但self被block强引用，self要得以解除分配的唯一条件即引用计数为0，这样的话就必须先解除block的分配，而前面的分析我们知道block被RACSubscriber实例引用，而该实例默认被self强引用，因此，如果不调用weakify/strongify，self就永远也不可能解除分配。
 
+最后，我们实际来调用`loadPopularPhotos`(他的实现如下)
 
+```
+- (void)loadPopularPhotos{
+	[[FRPPhotoImporter importPhotos] subscribeNext:^(id x){
+		self.photosArray = x;
+	} error:^(NSError * error){
+		NSLog(@"Couldn't fetch photofrom 500px: %@",error);
+	}];
+}
+```
 
+这个方法实际上负责调用`FRPPhotoImporter`的`importPhotos`方法（现在请加上他的头文件），他订阅了我们私有成员属性的结果。由于UICollectionViewDataSource协议的架构，我们不得不把这些状态引入进来。
 
+现在让我们来看一下这些协议方法，有两个是必须的，实现如下：
+
+```
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+	return self.photosArray.count;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+	FRPCell * cell = [collectionView dequeueReusableCellWithReuseIdentifier:CellIdentifier forIndexPath:indexPath];
+	[cell setPhotoModel:self.photosArray[indexPath.row]];
+
+	return cell;
+}
+```
+
+第一个方法简单地返回了collectionView中的cell的数量，在这里，准确地讲是photosArray属性的cell数量。接下来的这个方法从collectionView列表中获得了一个cell实例，并调用其上的`setPhotoModel:`方法（这个我们还没有实现，但别担心）。这些代码应该看起来非常熟悉，如果你曾经处理过UITableViewDataSource的方法的话。
+
+这就是我们`ViewController`完整的实现。现在我们来创建UICollectionViewCell的子类，命名为`FRPCell`,像下面这样来修改他的头文件。
+
+```
+@class FRPPhotoModel;
+
+@interface FRPCell : UICollectionViewCell
+- (void)setPhotoModel:(FRPPhotoModel *)photoModel;
+@end
+```
+
+在实现文件中添加下面的私有扩展：
+
+```
+#import "FRPPhotoModel.h"
+@interface FRPCell ()
+@property (nonatomic , weak ) UIImageView * imageView;
+@property (nonatomic , strong ) RACDisposeable *subscription;
+
+@end
+```
+
+这里有两个属性：一个图片视图和一个订阅者。图片视图是弱引用，因为它属于父视图（这是UICollectionViewCell的一个标准的用法），我们将实例化并赋值给imageView。接下来的属性是一个订阅，当使用ReactiveCocoa来设置图像视图的图像属性时，我们将接触到它。注意它必须是强引用而非弱引用否则你会得到一个运行时的异常。
+
+```
+- (id)initWithFrame:(CGRect)frame{
+	self = [super initWithFrame:frame];
+	if(!self) return nil;
+
+	//Configure self
+	self.backgroundColor = []UIColor darkGrayColor];
+
+	//Configure subviews
+	UIImageView * imageView = [[UIImageView alloc] initWithFrame:self.bounds];
+	imageView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+	[self.contentView addsubView:imageView];
+	self.imageView = imageView;
+
+	return self;
+}
+```
+标准的UICollectionView子类的模版会创建并分配imageView属性。注意，我们必须有一个（被self）强引用的本地变量作为中介来存储imageView，这样就不会在赋值给self的imageView属性的时候，imageView被立即解除分配。否则会有编译错误。
+
+完成我们的500px画廊，我们还需要实现两个方法，第一个就是`setPhotoModel:`方法
+
+```
+- (void)setPhotoModel:(FRPPhotoModel *)photoModel{
+	self.subscription = [[[RACObserver(photoModel, thumbnailData)
+		filter:^ BOOL (id value){
+			return value != nil;
+		}] map:^id (id value){
+			return [UIImage imageWithData:value];
+		}] setKeyPath:@keypath(self.imageView, image) onObject:self.imageView];
+}
+```
+这种方法来给订阅的属性赋值，我们老早就知道了。它把`setKeyPath:OnObject:`的返回值赋给了`self.subscription`.实践中这种方法根本不使用，我们使用RAC的C语法宏来代替，不久之后我们就会涉及这方面的知识。
+
+两个原因导致订阅是必要的：
+
+	1. 当它没有接受一个新的值时，我们想延迟处理。
+	2. 信号的订阅通常是冷信号，除非有人订阅他（信号），否则信号不会起作用。
+
+`setKeyPath:onObject:`是`RACSignal`的一个方法：绑定最新的信号的值给对象的关键路径。在这里我们在一个级联的信号上调用了这个方法，让我们来仔细看看：
+
+```
+[[RACObserver (photoModel, thumbnailData)
+	filter:^BOOL (id value){
+		return value != nil;
+	}] map:^ id (id value){
+		return [UIImage imageWithData:value];
+	}];
+```
+
+> 插入一个插图
+
+信号由`RACObserver`这个C的宏生成，这个宏简单地返回一个监控目标对象关键路径值变化的信号。在我们这个例子中，我们的目标对象是`photoModel`，关键路径为`thumbnailData`属性。我们过滤掉所有的nil值，然后对过滤后的值做映射：把NSData实例转为UIImage对象。
+
+注意，把NSData实例转化为UIImage的这个映射仅在小图上可以很好地运行，如果频繁地做这个映射或者作用到大图上会引起性能问题。理想的情况下，我们会缓存这些已经解压的图像以避免每一次都重复计算。这个技术不是本书所讨论的范畴，但我们将使用另一个通过ReactiveCocoa来实现的方法。
+
+thumbnailData属性根本不需要在这里设置，他可以在稍后的某个时间在应用的其他部分来完成设置，然后cell的图像就会像魔术一般更新。
+
+可以让我们稍微突破一下Model-View-Controller模式好吗？只是一点点的不守规矩。幸运的是，下一章我们将看到无处不在的MVC模式的困境，所以我们不必担心这一点点的突破，一点点的改进。
+
+上面提到的`setKeyPath:onObject:`方法中，一旦`onObject:`对象被释放，他的订阅也会被自动取消。我们的cell实例是被collectionView所复用的，因此在复用的时候，我们需要取消cell上各组件的订阅。我们可以通过重写`UICollectionViewCell`的下列方法达成：
+
+```
+- (void)perpareForReuse {
+	[super prepareForReuse];
+
+	[self.subscription dispose], self.subscription = nil;
+}
+
+```
+
+这个方法在Cell被复用之前调用。如果现在运行我的应用，我们可以看到下面的结果：
+
+> 插图
+
+太好了！我们可以通过滚动视图来证实我们手动处理订阅的有效性。
 
 
 
