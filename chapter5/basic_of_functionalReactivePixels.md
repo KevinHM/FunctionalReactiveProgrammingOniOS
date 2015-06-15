@@ -368,7 +368,7 @@ static NSString * CellIdentifier = @"Cell";
 ```
 `RACObserver`是一个C的宏定义，带两个参数：对象及对象某个属性的`keyPath`（关键路径）。他会返回一个带属性值的信号,无论这个属性的值怎么变都会及时地通过该信号反馈出来。在这里当self结束分配的时候会发送一个`completion Value`的值。订阅这个信号的目的是无论我们的photosArray中的元素属性怎么变，我们都能够在collectionView重新加载的时候实时获取反馈。
 
-在Objective-C的ARC条件下@weakify/@strongify这个双人舞是非常常见的。@weakify创建一个新的self的弱引用weakself，@strongify创建这个weakself的强引用，并在@strongify的作用域中起作用。当strongify的这种做法，一般称为“影子变量”，那是因为这个新的强引用的变量就叫`self`,替代了原本强引用的self.
+在Objective-C的ARC条件下@weakify/@strongify这个双人舞是非常常见的。@weakify创建一个新的self的弱引用weakself，@strongify创建这个weakself的强引用，并在@strongify的作用域中起作用。strongify的这种做法，一般称为“影子变量”，那是因为这个新的强引用的变量就叫`self`,替代了原本强引用的self.
 
 
 
