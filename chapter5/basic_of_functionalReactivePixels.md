@@ -197,7 +197,7 @@ URL请求的构造方法看起来应该是这样的:
 ```
 + (NSURLRequest *)popularURLRequest {
 	return [AppDelegate.apiHelper urlRequestForPhotoFeature:PXAPIHelperPhotoFeaturePopular
-				resultsPerPage:100 page:0 
+				resultsPerPage:100 page:0
 				photoSize:PXPhotoModelSizeThumbnail
 				sortOrder:PXAPIHelperSortOrderRating
 				except:PXPhotoModelCategoryNude];

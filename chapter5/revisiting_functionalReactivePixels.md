@@ -1,4 +1,4 @@
-# 跟随FunctionalReactivePixels的脚步
+# 和FunctionalReactivePixels一起实践
 上一节，我们很多次使用了`ReactiveCocoa`的关键部分，这里有更多的机会来使用`ReactiveCocoa`整个代码库。开始吧！
 
 首先在我们的画廊视图控制器中实现三个不同的代理方法：`CollectionViewDataSource`、`CollectionViewDelegate`、高清图视图控制器的`PhotoViewControllerDelegate`
@@ -15,18 +15,18 @@
 同时你也需要导入`RACDelegateProxy.h`，因为他不是ReactiveCocoa的核心部分，不包含在`ReactiveCocoa.h`中。移除`UICollectionViewDelegate`以及`FRPFullsizePhotoViewControllerDelegate`方法，追加下面的代码到`viewDidLoad`.
 
 ```
-RACDelegateProxy *viewControllerDelegate = [[RACDelegateProxy alloc] 
+RACDelegateProxy *viewControllerDelegate = [[RACDelegateProxy alloc]
 									initWithProtocol:@protocol(FRPFullSizePhotoViewControllerDelegate)];
-									
-[[viewControllerDelegate rac_signalForSelector:@selector(userDidScroll:toPhotoAtIndex:) 	fromProtocol:@protocol(FRPFullSizePhotoViewControllerDelegate)] 
+
+[[viewControllerDelegate rac_signalForSelector:@selector(userDidScroll:toPhotoAtIndex:) 	fromProtocol:@protocol(FRPFullSizePhotoViewControllerDelegate)]
 		subscribeNext:^(RACTuple *value){
 			@strongify(self);
-			[self.collectionView 
-				scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:[value.second integerValue] inSection:0] 
-				atScrollPosition:UICollectionViewScrollPositionCenteredVertically 
+			[self.collectionView
+				scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:[value.second integerValue] inSection:0]
+				atScrollPosition:UICollectionViewScrollPositionCenteredVertically
 				animated:NO];
 		}];
-		
+
 self.collectionViewDelegate = [[RACDelegateProxy alloc] initWithProtocol:@protocol(UICollectionViewDelegate)];
 
 [[self.collectionViewDelegate rac_signalForSelector:@selector(collectionView:didSelectItemAtIndexPath:)]
@@ -34,9 +34,9 @@ self.collectionViewDelegate = [[RACDelegateProxy alloc] initWithProtocol:@protoc
 			@strongify(self);
 			FRPFullSizePhotoViewController *viewController = [[FRPFullSizePhotoViewController alloc] initWithPhotoModels:self.photosArray currentPhotoIndex:[(NSIndexPath *)arguments.second item]];
 			viewController.delegate = (id<FRPFullSizePhotoViewControllerDelegate>)viewControllerDelegate;
-			
+
 			[self.navigationController pushViewController:viewController animated:YES];
-			
+
 		}];
 ```
 

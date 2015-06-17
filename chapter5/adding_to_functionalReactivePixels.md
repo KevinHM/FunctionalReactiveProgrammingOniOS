@@ -2,13 +2,13 @@
 一个简单的画廊弄好了，但是我们是不是想看一下高清图呢？当用户点击画廊中的某一个单元格时，我们创建一个新的视图控制器并将其推入到导航堆栈中。
 
 ```
-- (void)collectionView:(UICollectionView *)collectionView 
+- (void)collectionView:(UICollectionView *)collectionView
 	didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
 	FRPFullSizePhotoViewController * viewController = [[FRPFullSizePhotoViewController alloc] initWithPhotoModels:self.photosArray currentPhotoIndex:indexPath.item];
-	
+
 	viewController.delegate = self;
 	[self.navigationController pushViewController:viewController animated:YES];
-	
+
 }
 ```
 
@@ -39,8 +39,8 @@
 
 ```
 - (void)userDidScroll:(FRPFullSizePhotoViewController *)viewController toPhotoAtIndex:(NSInteger)index{
-	[self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0] 
-				atScrollPosition:UICollectionViewScrollPositionCenteredVertically 
+	[self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]
+				atScrollPosition:UICollectionViewScrollPositionCenteredVertically
 						animated:NO];
 }
 ```
@@ -64,26 +64,26 @@
 - (instancetype)initWithPhotoModels:(NSArray *)photoModelArray currentPhotoIndex:(NSInteger)photoIndex{
 	self = [self init];
 	if (!self) return nil;
-	
+
 	//Initialized, read-only properties
 	self.photoModelArray = photoModelArray;
-	
+
 	//Configure self
 	self.title = [self.photoModelArray[photoIndex] photoName];
-	
+
 	//ViewControllers
-	self.pageViewController = [UIPageViewController alloc] 
-									initWithTransitionStyle:UIPageViewControlerTransitionStyleScroll 
-									navigationOrientation:UIPageViewControllerNavigationOrientationHorizontal 
+	self.pageViewController = [UIPageViewController alloc]
+									initWithTransitionStyle:UIPageViewControlerTransitionStyleScroll
+									navigationOrientation:UIPageViewControllerNavigationOrientationHorizontal
 									options:@{ UIPageViewControllerInterPageSpacingKey: @(30)};
 	self.pageViewController.dataSource = self;
 	self.pageViewController.delegate = self;
 	[self addchildViewController:self.pageViewController];
-	
-	[self.pageViewController setViewController:@[[self photoViewControllerForIndex:photoIndex]] 
-							direction:UIPageViewControllerNavigationDirectionForward 
+
+	[self.pageViewController setViewController:@[[self photoViewControllerForIndex:photoIndex]]
+							direction:UIPageViewControllerNavigationDirectionForward
 							animated:NO completion:nil ];
-							
+
 	return self;
 }
 ```
@@ -93,11 +93,11 @@
 ```
 - (void)viewDidLoad{
 	[super viewDidLoad];
-	
+
 	self.view,backGroundColor = [UIColor blackColor];
-	
+
 	self.pageViewController.view.frame = self.view.bounds;
-	
+
 	[self.view addSubView:self.pageViewController.view];
 }
 ```
@@ -113,7 +113,7 @@
 		self.title = [[self.pageViewController.viewControllers.firstObject photoModel] photoName];
 		[self.delegate userDidScroll:self toPhotoAtIndex:[self.pageViewController.viewControllers.firstObject photoIndex]];
 	}
-	
+
 - (UIViewController *)pageViewController:(UIPageViewController *)pageViewController viewControllerBeforeViewController:(FRPPhotoViewController *)viewController{
 	return [self photoViewControllerForIndex:viewController.photoIndex - 1];
 }
@@ -131,12 +131,12 @@
 - (FRPPhotoViewController *)photoViewControllerForIndex:(NSInteger)index{
 	if (index >= 0 && index < self.photoModelArray.count){
 		FRPPhotoModel *photoModel = self.photoModelArray[index];
-		
+
 		FRPPhotoViewController *photoViewController = [[FRPPhotoViewController alloc] initWithPhotoModel:photoModel index:index];
-		
+
 		return photoViewController;
 	}
-	
+
 	//Index was out of bounds, return nil
 	return nil;
  }
@@ -151,7 +151,7 @@
 
 @property (nonatomic, readonly) NSInteger photoIndex;
 @property (nonatomic, readonly) FRPPhotoModel * photoModel;
- 
+
 @end
 
 ```
@@ -180,26 +180,26 @@
 - (instancetype)initWithPhotoModel:(FRPPhotoModel *)photoModel index:(NSInteger)photoIndex{
 	self = [self init];
 	if (!self) return nil;
-	
+
 	self.photoModel = photoModel;
 	self.photoIndex = photoIndex;
-	
+
 	return self;
 }
 
 - (void)viewDidLoad{
 	[super viewDidLoad];
-	
+
 	//Configure self's view
 	self.view.backGroundColor = [UIColor blackColor];
-	
+
 	//Configure subViews
 	UIImageView *imageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
-	
+
 	RAC(imageView, image) = [RACObserve(self.photoModel, fullsizeData) map:^id (id value){
 										return [UIImage imageWithData:value];
 									}];
-	
+
 	imageView.contentMode = UIViewContentModeScaleAspectFit;
 	[self.view addSubView:imageView];
 	self.imageView = imageView;
@@ -208,12 +208,12 @@
 - (void)viewWillAppear:(BOOL)animated{
 	[super viewWillAppear:animated];
 	[SVProgressHUD show];
-	
+
 	//Fetch data
-	[[FRPPhotoImporter fetchPhotoDetails:self.photoModel] 
+	[[FRPPhotoImporter fetchPhotoDetails:self.photoModel]
 			subscribeError:^(NSError *error){
 				[SVProgressHUD showErrorWithStatus:@"Error"];
-			} 
+			}
 			completed:^{
 				[SVProgressHUD dismiss];
 			}];
@@ -229,10 +229,10 @@
 ```
 [SVProgressHUD show];
 //Fetch data
-[[FRPPhotoImporter fetchPhotoDetails:self.photoModel] 
+[[FRPPhotoImporter fetchPhotoDetails:self.photoModel]
 		subscribeError:^(NSError * error){
 			[SVProgressHUD showErrorWithStatus:@"Error"];
-		} 
+		}
 		completed:^{
 			[SVProgressHUD dismiss];
 		}];
@@ -251,16 +251,16 @@
 + (RACReplaySubject *)fetchPhotoDetails:(FRPPhotoModel *)photoModel {
 	RACReplaySubject * subject = [RACReplaySubject subject];
 	NSURLRequest *request = [self photoURLRequest:photoModel];
-	
-	[NSURLConnection sendAsynchronousRequest:request 
-		queue:[NSOperationQueue mainQueue] 
+
+	[NSURLConnection sendAsynchronousRequest:request
+		queue:[NSOperationQueue mainQueue]
 		completionHandler:^ (NSURLResponse *response, NSData * data, NSError *connectionError){
 			if(data){
 				id results = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil][ @"photo" ];
-				
+
 				[self configurePhotoModel:photoModel withDictionary:results];
 				[self downloadFullsizedImageForPhotoModel:photoModel];
-				
+
 				[subject sendNext:photoModel];
 				[subject sendCompleted];
 			}
@@ -268,7 +268,7 @@
 				[subject sendError:connectionError];
 			}
 		}];
-		
+
 	return subject;
 }
 ```
@@ -296,7 +296,7 @@
 
 + (void)download:(NSString *)urlString withCompletion:(void(^)(NSData * data))completion{
 	NSAssert(urlString, @"URL must not be nil" );
-	
+
 	NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:urlString]];
 	[NSURLConnnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError){
 		if (completion){
