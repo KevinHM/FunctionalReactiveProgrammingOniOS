@@ -98,7 +98,7 @@ RAC(self, photosArray) = [[[[FRPPhotoImporter importPhotos]
 
 - (void)perpareForReuse {
 	[super perpareForReuse];
-	
+
 	[self.subscription dispose], self.subscription = nil;
 }
 
@@ -131,7 +131,7 @@ RAC(self, photosArray) = [[[[FRPPhotoImporter importPhotos]
 
 ```Objective-C
 
-RAC(self.imageView, image) = [[RACObserve(self, photoModel.thumbnailData) ignore:nil] 
+RAC(self.imageView, image) = [[RACObserve(self, photoModel.thumbnailData) ignore:nil]
 							map:^(NSData *data){
 								return [UIImage imageWithData:data];
 							}];

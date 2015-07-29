@@ -17,15 +17,15 @@
 
 + (void)download:(NSString *)urlString withCompletion:(void (^)(NSData *data))completion {
 	NSAssert(urlString, @"URL must not be nil");
-	
+
 	NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:urlString]];
-	[NSURLConnection sendAsynchronousRequest:request 
-								queue:[NSOperationQueue mainQueue] 
+	[NSURLConnection sendAsynchronousRequest:request
+								queue:[NSOperationQueue mainQueue]
 								completionHandler:
 									 ^(NSURLResponse *response, NSData *data, NSError *connectionError) {
 											if(completion) {
 												completion(data);
-											}  
+											}
 									 }];
 }
 
@@ -43,10 +43,10 @@ Completion blocks?这是另外一个使用Signals的机会。更深入一点来�
 
 + (RACSignal *)download:(NSString *)urlString {
 	NSAssert(urlString , @"URL must not be nil");
-	
+
 	NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString: urlString]];
-	
-	return [[[NSURLConnection rac_sendAsynchronousRequest:request] 
+
+	return [[[NSURLConnection rac_sendAsynchronousRequest:request]
 				map:^id (RACTuple *value) {
 					return [value second];
 				}] deliverOn:[RACScheduler mainThreadScheduler]];
@@ -76,10 +76,10 @@ RAC(photoModel, thumbnailData) = [self download:photoModel.thumbnailURL];
 ```
 + (RACReplaySubject *)fetchPhotoDetails:(FRPPhotoModel *)photoModel {
 	RACReplaySubject *subject = [RACReplaySubject subject];
-	
+
 	NSURLRequest *request = [self photoURLRequest:photoModel];
-	[NSURLConnection sendAsynchronousRequest:request 
-			     queue:[NSOperationQueue mainQueue] 
+	[NSURLConnection sendAsynchronousRequest:request
+			     queue:[NSOperationQueue mainQueue]
 	completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
 			if(data) {
 				id results = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil][@"photo"];
@@ -90,12 +90,12 @@ RAC(photoModel, thumbnailData) = [self download:photoModel.thumbnailURL];
 			}
 			else {
 				[subject sendError:connectionError];
-			}								  
+			}
 	}];
-	
-	
+
+
 	return subject;
-	
+
 }
 ```
 
@@ -105,13 +105,13 @@ RAC(photoModel, thumbnailData) = [self download:photoModel.thumbnailURL];
 ```Objective-C
 + (RACSignal *)fetchPhotoDetails:(FRPPhotoModel *)photoModel {
 	NSURLRequest *request = [self photoURLRequest:photoModel];
-	return [[[[[[NSURLConnection rac_sendAsynchronousRequest:request] 
+	return [[[[[[NSURLConnection rac_sendAsynchronousRequest:request]
 							    map:^id(RACTuple *value){
 							    	return [value second];
 							    }]
 							    deliverOn:[RACScheduler mainThreadScheduler]]
 							    	map:^id (NSData *data) {
-							    		id results = [NSJSONSerialization JSONObjectWithData:data 
+							    		id results = [NSJSONSerialization JSONObjectWithData:data
 							    				                       options:0 error:nil][@"photo"];
 							    		[self configurePhotoModel:photoModel withDictionary:results];
 							    		[self downloadFullsizedImageForPhotoModel:photoModel];
@@ -127,7 +127,7 @@ RAC(photoModel, thumbnailData) = [self download:photoModel.thumbnailURL];
 
 我们已经知道`deliverOn:`是怎样工作的，所以让我们来关注信号链条最末端的信号操作`publish`. `publish`返回一个`RACMulitcastConnection`,当信号连接上时，他将订阅该接收信号。`autoconnect`为我们做的是：当它返回的信号被订阅，连接到
  该(订阅背后的)信号（underly signal）。
- 
+
  执行获取每一个订阅，在订阅的时候，我们返回的信号将会变“冷”。那是因为我们对底层信号进行多播，网络请求只会执行一次，但是它的结果被多播。这会导致：网络信号将只会被执行一次（当它被订阅时执行），是冷的(直到订阅为止，它不会被执行)，甚至可删除的(如果一次性处理订阅的生成)。
 
 基本上，我们能保证信号只会被订阅一次，我们不需要回滚(replay).
@@ -145,15 +145,15 @@ reduceEach:^id(NSURLResponse *response, NSData *data) {
 ```
 + (RACSignal *)importPhotos {
 	NSURLRequest *request = [self popularURLRequest];
-	
-	return [[[[[[NSURLConnection rac_sendAsynchronousRequest:request] 
+
+	return [[[[[[NSURLConnection rac_sendAsynchronousRequest:request]
 				reduceEach:^id(NSURLResponse *response , NSData *data){
 					return data;
-				}] 
-				deliverOn:[RACScheduler mainThreadScheduler]] 
+				}]
+				deliverOn:[RACScheduler mainThreadScheduler]]
 				map:^id (NSData *data) {
 					id results = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-					return [[[results[@"photo"] rac_sequence] 
+					return [[[results[@"photo"] rac_sequence]
 						map:^id (NSDictionary *photoDictionary) {
 							FRPPhotoModel *model = [FRPPhotoModel new];
 							[self configurePhotoModel:model withDictionary:photoDictionary];
