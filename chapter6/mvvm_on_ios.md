@@ -1,3 +1,9 @@
 # MVVM On iOS
 
-有一个禅宗佛教的概念叫做"初心"。禅宗法师[铃木俊隆](http://baike.baidu.com/link?url=TLIi5l8x9oMLt-baIJo2-yzKnjjixIK6QlEPHvXfQPpH4Gyn-KGqhUReIv0TbikIygacpGmWj8GTBw2A9JfRa_)写道："初学者的心中有很多可能性（莫名的点子），但在专家心里(这种可能性/点子)就相对少很多"。在写作本书的过程中，我经常会回到这个概念里重新审视自己，提醒自己对那些看起来很新的或者一些不习惯的事物不要过早下结论.
+有一个禅宗佛教的概念叫做"初心"。禅宗法师[铃木俊隆](http://baike.baidu.com/link?url=TLIi5l8x9oMLt-baIJo2-yzKnjjixIK6QlEPHvXfQPpH4Gyn-KGqhUReIv0TbikIygacpGmWj8GTBw2A9JfRa_)写道："初学者的心中有很多可能性（潜意识的点子），但在专家心里(这种可能性/点子)就相对少很多"。在写作本书的过程中，我经常会回到这个概念里重新审视自己，提醒自己不要对那些看起来很新的或不习惯的事物过早下结论.
+
+本着这种精神，我们回过头来看看你当初接触iOS应用开发的情形：与可能只知道使用Model-View-Controller（MVC）的架构来编写iOS应用的现在的你相比，那时候你一无所知。你的内心随时准备接纳外界无限的可能性（这里指的是任何可以编写iOS应用的方式）。而MVC社区的长老们指导你使用MVC架构来做，因为那就是他们所知道的苹果公司所倡导的方式。
+
+如果你已经用这种方式开发iOS应用程序一段时间，你可能会熟悉MVC背后的另类意义：巨大的试图控制器.(因为MVC:恶搞成Massive View Controller的缩写)。很多时候，把业务逻辑和其他代码放在试图控制器中显得很方便，即使从架构的角度上来说把它们放在这里不是最完善的。
+
+Model View View-Model 也称MVVM，是一种出自微软的替代MVC架构的新架构。我知道，我知道！iOS社区没有任何历史作为微软的铁杆粉丝而存在，但（微软）他们的软件工程小组确实做出了伟大的工作。MVVM不仅仅在.Net平台上使用---我们也可以在iOS平台上使用。就像我们在这一章将要看到的：与ReactiveCocoa结合使用，MVVM令人难以置信地适用于iOS。使用MVVM能够有效地减少ViewController中的业务逻辑，这会大大减少其臃肿的体积，也使得业务逻辑更容易测试。
