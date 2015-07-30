@@ -32,7 +32,7 @@
    * [总结](chapter5/conclusion.md)
 * [MVVM On iOS](chapter6/mvvm_on_ios.md)
    * [什么是MVVM](chapter6/what_is_mvvm.md)
-   * [跟随FunctionalReactivePixels的脚步](chapter6/revisiting_functionalReactivePixels.md)
+   * [重温FunctionalReactivePixels](chapter6/revisiting_functionalReactivePixels.md)
    * [MVVM的具体实践](chapter6/mvvm_in_practice.md)
    * [测试ViewModels](chapter6/testing_viewModels.md)
    * [终稿](chapter6/final_thoughts.md)
