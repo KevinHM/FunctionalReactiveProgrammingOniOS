@@ -137,7 +137,135 @@ self.title = [self.viewModel.initialPhotoModel photoName];
 
 ```
 
-这样做的另一个优点是：业务逻辑不需要重复书写，而且也使得这个非常好进行单元测试。
+这样做的另一个优点是：业务逻辑不需要重复书写，而且也使得业务逻辑非常好进行单元测试。
+
+最后，我们需要在高清视图控制器中设置该视图模型，否则屏幕上将不会显示任何东西。导航到我们的画廊视图控制器（那个我们实例化并推出高清视图控制器的地方）。用下面的代码来替换这个业务逻辑：
+
+```Objective-C
+[[self rac_signalForSelector:@selector(collectionView:didSelectItemAtIndexPath:) 
+	fromProtocol:@protocol(UIcollectionViewDelegate)] subscribeNext:^(RACTuple *arguments) {
+		@strongify(self);
+		
+		NSIndexPath *indexPath = arguments.second;
+		FRPFullSizePhotoViewModel *viewModel = [[FRPPhotoViewModel alloc] 
+			initWithPhotoArray:self.viewModel.model initialPhotoIndex:indexPath.item];
+		
+		FRPFullSizePhotoViewController *viewController = [[FRPFullSizePhotoViewController alloc] init];
+		
+		viewController.viewModel = viewModel;
+		viewController.delegate = (id<FRPFullSizePhotoViewControllerDelegate>)self;
+		
+		[self.navigationController pushViewController:viewController animated:YES];
+	}];
+```
+在下一节开始之前，我们没有计划为视图模型撰写单元测试。下一节我们看到在视图模型上如何运行测试驱动开发的概念。现在我们来完成`FRPGalleryViewModel`吧，很基础。我们想要从视图控制器中抽象出来的逻辑是通过API加载`model`的数据内容。我们来看一下应该怎么做：
+
+```Objective-C
+
+@interface FRPGalleryViewModel : RVMViewModel
+
+@property (nonatomic, readonly, strong) NSArray *model;
+
+@end
+
+```
+
+基本的接口：将`model`申明为数组`NSArray`.接下来，我们简单实现它：
+
+```Objective-C
+
+//Utilities
+
+#import "FRPPhotoImporter.h"
+
+@interface FRPGalleryViewModel ()
+
+@end
+
+@implementation FRPGalleryViewModel
+
+- (instancetype)init {
+	self = [super init];
+	if(!self) return nil;
+	
+	RAC(self, model) = [[[FRPPhotoImporter importPhotos] logError] catchTo:[RACSignal empty]];
+	
+	return self;
+}
+
+@end
+
+```
+
+有争议的是，我们应该把从API加载数据的(RAC绑定的)逻辑放在初始化方法中，还是放在视图模型被激活的地方。接下来我们会讨论更多的关于激活的内容，但我想要展示给你们看这个视图模型到底能做到多简单。将直接在画廊视图控制器中加载数据内容的逻辑迁移到画廊的视图模型中是非常简单的：在视图控制器的初始化中初始化视图模型===》任何引用试图控制`self.model`属性的地方使用`self.viewModel.model`来代替即可。
+
+我们可以进一步深挖视图模型的构造，甚至可以通过一系列的访问器把`model`的访问逻辑抽象出来，但在这个例子里就有点过多‘抽象’了。更重要的是你可以根据你的喜好将更多的或者更少的业务逻辑抽象到视图模型中。我发现，就我个人而言，这个架构使用的越多，业务逻辑抽象出来的越多，就意味着更轻量级的视图控制器以及高内聚和可测试的代码。
+
+把注意力移到单元测试之前，我们来做多一次用视图模型来抽象业务逻辑的实践。
+
+我们的最后一个例子是`FRPPhotoViewController`上的`FRPPhotoViewModel`:创建一个`RVMViewModel`的视图模型子类并放置在视图控制器中(很快我们会回到视图模型中)。
+
+视图控制器的新的初始化方法如下：
+
+```Objective-C
+- (instancetype)initWithViewModel:(FRPPhotoViewModel *)viewModel index:(NSInteger)photoIndex {
+
+	self = [self init];//NS_DESIGNATED_INITIALIZER
+	if(!self) return nil;
+	
+	self.viewModel = viewModel;
+	self.photoIndex = photoIndex;
+	
+	return self;
+}
+
+```
+
+确定导入必要的头文件并为视图模型申明私有属性。现在我们需要使用新的初始化方法初始化视图控制器。看一看视图控制器到页面视图控制器的方法`photoViewControllerForIndex:`.
+
+```Objective-C
+- (FRPPhotoViewController *)photoViewControllerForIndex:(NSInteger)index {
+	FRPPhotoModel *photoModel = [self.viewModel photoModelAtIndex:index];
+	if(photoModel) {
+		FRPPhotoViewModel *photoViewModel = [[FRPPhotoViewModel alloc] initWithModel:photoModel];
+		FRPPhotoViewController *photoViewController = [[FRPPhotoViewController alloc] \
+							 initWithViewModel:photoViewModel 
+									      index:index];
+									      
+		return photoViewController;
+	}
+	
+	return nil;
+}
+
+```
+
+新的初始化过程中我们创建了一个视图模型。
+
+在我们的`viewDidLoad:`方法里，我们将使用这个新的视图模型为我们的图片视图提供数据，并且为用户显示图片的下载进度。这里有个貌似冲突的地方：图片的下载是视图的模型的业务逻辑之一，但视图什么时候显示开始加载数据(这个业务逻辑)视图模型中没有体现---记住一个好的视图模型不应该引用视图本身。那么我们如何来混合地使用这两个业务逻辑？
+
+答案是我们借助视图模型的`active`状态来对付（上面的情况）。`RVMViewModel`提供了一个布尔属性`active`，当试图控制器变得"活跃"时(不管在语义的上下文里这是啥意思)，在这里，我们可以在`viewWillAppear:`和`viewDidDisappear:`这些方法来设置这个属性。
+
+```Objective-C
+- (void)viewWillAppear:(BOOL)animated {
+	[super viewWillAppear:animated];
+	
+	self.viewModel.active = YES;
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+	[super viewDidDisappear:animated];
+	
+	self.viewModel.active = NO;
+}
+```
+相当简单吧，我们来看一下我们新的`viewDidLoad`方法：
+
+```Objective-C
+
+
+```
+
 
 
 
