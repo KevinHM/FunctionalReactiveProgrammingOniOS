@@ -95,9 +95,49 @@ self.title = [self.viewModel.initialPhotoModel photoName];
 我们来完成实现文件里的东西。第一件事就是：我们需要#import `FRPPhotoModel`类的头文件。然后，我们将打开私有属性的读写访问权限。
 
 ```Objective-C
+//Model
+#import "FRPPhotoModel.h"
 
+@interface FRPFullSizePhotoViewModel ()
+//private access
+@property (nonatomic, assign) NSInteger initialPhotoIndex;
 
+@end
 
 ```
+好！下一步处理我们的初始化方法
+
+```Objective-C
+- (instancetype)initWithPhotoArray:(NSArray *)photoArray initialPhotoIndex:(NSInteger)initialPhotoIndex {
+	self = [super initWithModel:photoArray];
+	if(!self) return nil;
+	
+	self.initialPhotoIndex = initialPhotoIndex;
+	
+	return self;
+}
+```
+
+初始化方法中，先调用超类的`initWithModel:`实现，然后设置自己的`initialPhotoIndex`属性。剩下的两个只读属性的获取逻辑微不足道。
+
+```Objective-C
+- (NSString *)initialPhotoName {
+	return [[self photoModelAtIndex:self.initialPhotoIndex] photoName];
+}
+
+- (FRPPhotoModel *)photoModelAtIndex:(NSInteger)index {
+	if(index < 0 || index > self.model.count - 1) {
+		//Index was out of bounds, return nil
+		return nil;
+	}
+	else {
+		return self.model[ index ];	
+	}
+}
+
+```
+
+这样做的另一个优点是：业务逻辑不需要重复书写，而且也使得这个非常好进行单元测试。
+
 
 
