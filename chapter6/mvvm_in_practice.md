@@ -262,9 +262,50 @@ self.title = [self.viewModel.initialPhotoModel photoName];
 相当简单吧，我们来看一下我们新的`viewDidLoad`方法：
 
 ```Objective-C
-
+- (void)viewDidLoad {
+	[super viewDidLoad];
+	
+	//Configure self's view
+	self.view.backgroundColor = [UIColor blackColor];
+	
+	//Configure subViews
+	UIImageView *imageView = [[UIImageView alloc] initWithFrame:self.view.bounds];
+	RAC(imageView, image) = RACObserve(self.viewModel,photoImage);
+	imageView.contentModel = UIViewContentModelScaleAspectFit;
+	[self.view addSubView:imageView];
+	self.imageView = imageView;
+	
+	[RACObserve(self.viewModel, loading) subscribeNext:^(NSNumber *loading) {
+		if(loading.boolValue) {
+			[SVProgressHUD show];
+		}
+		else {
+			[SVProgressHUD dismiss];	
+		}
+	}];
+}
 
 ```
+该图片视图的图片属性的绑定是标准的ReactiveCocoa方式,有趣的是下面(我们要提到的)我们使用`loading`的时刻。当加载信号发送`YES`的时候我们展示进度HUD，发送`NO`的时候，让进度HUD消失。我们将看到该`loading`信号本身如何依赖于`didBecomeActiveSignal`。现在只是视图模型通过网络请求获取图像数据的序幕。
+
+接口的申明如下：
+
+```Objective-C
+@class FRPPhotoModel;
+
+@interface FRPPhotoViewModel : RVMViewModel
+
+@property (nonatomic, readonly) FRPPhotoModel *model;
+@property (nonatomic, readonly) UIImage *photoImage;
+@property (nonatomic, readonly, getter = isLoading) BOOL loading;
+
+- (NSString *)photoName;
+
+@end
+
+```
+
+
 
 
 
