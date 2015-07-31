@@ -1,1 +1,4 @@
 # MVVM的具体实践
+
+本章的其他部分将把Functional Reactive Pixels Demo的其他代码迁移到MVVM架构中。我们将添加一个新的库到Podfile文件里。Github上创作了ReactiveCocoa的黑客，也同时创建了一个ViewModel的基类:ReactiveViewModel.我们将要使用它的0.1.1版本。更新Podfile之后立即运行`pod install`以安装该库。
+
