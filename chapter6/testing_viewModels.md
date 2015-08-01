@@ -353,8 +353,109 @@ describe (@"FRPPhotoViewModel", ^{
 现在来看这个复杂的初始化方法，这东西看起来真巨大！近20行纯粹的未经测试的代码。哎呀！让我们来一点点简化这个事情，并逐步加上我们的测试代码。
 
 ```Objective-C
+- (instancetype)initWithModel:(FRPPhotoModel *)photoModel {
+	self = [super initWithModel:photoModel];
+	if(!self) return nil;
+	
+	@weakify(self);
+	[self.didBecomeActiveSignal subscribeNext:^(id x) {
+		@strongify(self);
+		[self downloadPhotoModelDetails];
+	}];
+	
+	RAC(self, photoImage) = [RACObserve(self.model, fullsizedData) map:^id (id value) {
+		return [UIImage imageWithData:value];
+	}];
+	
+	return self;
+}
+
+- (void)downloadPhotoModelDetails {
+	self.loading = YES;
+	[[FRPPhotoImporter fetchPhotoDetails:self.model] subscribeError:^(NSError *error) {
+		NSLog(@"Could not fetch photo details : %@",error);
+	} completed:^ {
+		self.loading = NO;
+		NSLog(@"Fetched photo details.");
+	}];
+}
 
 ```
 
+我们选择了不直接测试`fetchPhotoDetails:`,所以我们把它置于一个实例方法中，以便更容易对它进行测试。这个方法(即`fetchPhotoDetails:`)实现的细节在这里对我们不重要。
 
+现在开始写关于它的测试代码吧：
+
+```Objective-C
+it(@"should download photo model details when it becomes active", ^{
+	FRPPhotoViewModel *viewModel = [[FRPPhotoViewModel alloc] initWithModel:nil];
+	
+	id mockViewModel = [OCMockObject partialMockForObject:viewModel];
+	[[mockViewModel expect] downloadPhotoModelDetails];
+	
+	[mockViewModel setActive:YES];
+	[mockViewModel verify];
+});
+```
+
+注意看初始化方法中不产生(函数)副作用而是把这种副作用放在订阅`didBecomeActiveSignal`的Block块中时，测试视图模型的代码是多么简单！
+
+现在我们需要测试剩下的那些视图模型，他们全部非常简单。我们使用更少的mock，因为很多的业务逻辑仅仅是视图模型的model值到他自己的属性的映射。
+
+```Objective-C
+it (@"should return the photo's name property when photoName is invoked", ^{
+	NSString *name = @"Ash";
+	
+	id mockPhotoModel = [OCMockObject mockForClass:[FRPPhotoModel class]];
+	[[[mockPhotoModel stub] andReturn:name] photoName];
+	
+	FRPPhotoViewModel *viewModel = [[FRPPhotoViewModel alloc] initWithModel:nil];
+	id mockViewModel = [OCMockObject partialMockForObject:viewModel];
+	[[[mockViewModel stub] andReturn:mockPhotoModel] model];
+	
+	id returnedName = [mockViewModel photoName];
+	
+	expect(returnedName).to.equal(name);
+	
+	[mockPhotoModel stopMocking];
+});
+
+it (@"should correctly map image data to UIImage", ^{
+	UIImage *image = [[UIImage alloc] init];
+	NSData *imageData = [NSData data];
+	
+	id mockImage = [OCMockObject mockForClass:[UIImage class]];
+	[[[mockImage stub] andReturn:image] imageWithData:imageData];
+	
+	FRPPhotoModel *photoModel = [[FRPPhotoModel alloc] init];
+	
+	photoModel.fullsizedData = imageData;
+	
+	__unused FRPPhotoViewModel *viewModel = [[FRPPhotoViewModel alloc] initWithModel:photoModel];
+	
+	[mockImage verify];
+	[mockImage stopMocking];
+	
+});
+
+it(@"should return the correct photo name", ^{
+	NSString *name = @"Ash";
+	
+	FRPPhotoModel *photoModel = [[FRPPhotoModel alloc] init];
+	photoModel.photoName = name;
+	
+	FRPPhotoViewModel *viewModel = [[FRPPhotoViewModel alloc] initWithModel:photoModel];
+	
+	NSString *returnedName = [viewModel photoName];
+	
+	expect(name).to.equal(returnedName);
+});
+
+```
+
+这就是为视图模型撰写单元测试的全部内容了。
+
+在理想的情况下，单元测试能帮助改进你的代码质量。小巧而高内聚的方法比随意的满是副作用的方法更招人待见。它简单而完美地诠释了函数响应型编程的精髓。
+
+测试MVVM的好处是：我们不用触及UIKit。请记住，写得好的MVVM视图模型的特点是：该视图模型不会与用户交互的接口类有任何交互。
 
