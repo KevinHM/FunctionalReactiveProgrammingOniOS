@@ -272,7 +272,89 @@ describe(@"FRPGalleryViewModel",^{
 
 为了测试一个方法，测试代码也太多了吧！ 我知道，我知道~ 这是OCMock没落的原因之一，它竟然需要这么多的模板。但你不能责怪它，因为它要工作在令它不寒而栗的Objective-C平台上！
 
+我们创建了一个`FRPGalleryViewModel`的mock版本，告诉它期望`importPhotoSignal`被调用。然后才进行对象的初始化。这里使用了一点点技巧，因为我们在mockObject上调用了init方法，但它(init)实际上是一个NSProxy的子类。然后，对OCMock来讲，它足够聪明，它了解这一切，有能力做出正确的选择。只是看起来有点诡异罢了。我们使用`[mockObject init]`给`mockObject`赋值，也是为了屏蔽编译警告。最后我们验证了所有预期可能被调用的方法。
 
+这个例子中表现出来的测试很困难的情况也说明了另一个问题，你应该避免视图模型的初始化方法产生"副作用"(参见前面章节提到的“函数的副作用”)，应该使用`didBecomeActiveSignal`来代理。
+
+下面我们来测试`FRPPhotoViewModel`.再次突出引起函数副作用和使用`didBecomeActiveSignal`的区别。
+
+快速浏览下实现：
+
+```Objective-C
+
+@implementation FRPPhotoViewModel
+
+- (intancetype)initWithModel:(FRPPhotoModel *)photoModel {
+	self = [super initWithModel:photoModel];
+	if(!self) return nil;
+	
+	@weakify(self);
+	[self.didBecomeActiveSignal subscribeNext:^ (id x) {
+		@strongify(self);
+		self.loading = YES;
+		[[FRPPhotoImporter fetchPhotoDetails:self.model] 
+			subscribeError: ^ (NSError *error) {
+				NSLog(@"Could not fetch photo details: %@",error);
+			} 
+			completed: ^ {
+				self.loading = NO;
+				NSLog(@"Fetched photo details");
+			}];
+	}];
+	
+	RAC(self, photoImage) = [RACObserve(self.model, fullsizedData) map:^id (id value) {
+		return [UIImage imageWithData:value];
+	}];
+	
+	return self;
+}
+
+- (NSString *)photoName {
+	return self.model.photoName;
+}
+
+@end
+
+```
+首先我们来测试`photoName`方法：
+
+```Objective-C
+#import <Specta/Specta.h>
+#define EXP_SHORTHAND
+#import <Expecta/Expecta.h>
+#import <OCMock/OCMock.h>
+
+#import "FRPPhotoViewModel.h"
+#import "FRPPhotoModel.h"
+
+SpecBegin(FRPPhotoViewModel)
+
+describe (@"FRPPhotoViewModel", ^{
+	it(@"should return the photo's name property when photoName is invoked", ^{
+		NSString *name = @"Ash";
+		
+		id mockPhotoModel = [OCMockObject mockForClass:[FRPPhotoModel class]];
+		[[[mockPhotoModel stub] andReturn:name] photoName];
+		
+		FRPPhotoViewModel *viewModel = [[FRPPhotoViewModel alloc] initWithModel:nil];
+		id mockViewModel = [OCMockObject partialMockForObject:viewModel];
+		[[[mockViewModel stub] andReturn:mockPhotoModel] model];
+		
+		id returnName = [mockViewModel photoName];
+		
+		expect(returnedName).to.equal(name);
+		[mockPhotoModel stopMocking];
+	});
+});
+
+```
+我们为mock的视图模型的model属性添加了一个mockPhotoModel，它会mocks所有的途径。
+
+现在来看这个复杂的初始化方法，这东西看起来真巨大！近20行纯粹的未经测试的代码。哎呀！让我们来一点点简化这个事情，并逐步加上我们的测试代码。
+
+```Objective-C
+
+```
 
 
 
