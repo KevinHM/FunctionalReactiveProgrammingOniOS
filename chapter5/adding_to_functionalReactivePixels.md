@@ -310,4 +310,6 @@
 
 好了。我们现在可以运行这个应用，点击一个图片去查看它的高清图片。我们也可以向前或者向后滑动来查看前一个或后一个高清图片。非常棒！
 
+![fullsize_gallerypictures](../images/fullsize_gallerypictures.png)
+
 

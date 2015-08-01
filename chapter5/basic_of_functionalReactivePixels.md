@@ -1,15 +1,17 @@
 # FunctionalReactivePixels的基础知识
 FunctionReactivePixels将会是一个简单的观看'500px'中最受欢迎的照片的应用。一旦我们完成这一节，应用的主界面将会像下面这样：
 
-> 插入一个图片
+![app_main_page](../images/app_main_page.png)
 
 当然我们也可以像下图一样观看全屏模式下的图片。
 
-> 插入一个图片
+![app_secondary_detailpage](../images/app_secondary_detailpage.png)
 
 这个App将使用Collection Views。如果你没有太多这方面的经验，也不需要太过担心---他们(CollectionView)就像TableView一样，使用起来非常简单。如果你对UICollectionView感兴趣，可以阅读我的[另一本书](http://www.amazon.com/iOS-UICollectionView-Complete-Edition-Programming-ebook/dp/B00IHZKDCU).
 
 我们将使用CocoaPods来管理我们的依赖，现在创建一个新的工程。我喜欢使用空模版以便我可以完全控制viewController层级。
+
+![app_project_create](../images/app_project_create.png)
 
 首先、我们将创建一个UICollectionViewController的子类FRPGalleryViewController.同时我们创建一个UICollectionViewFlowLayout的子类FRPGalleryFlowLayout.
 
@@ -57,6 +59,8 @@ FunctionReactivePixels将会是一个简单的观看'500px'中最受欢迎的照
 }
 ```
 很好!如果我们现在运行，我们将看到一个空视图。
+
+![app_main_emptypage](../images/app_main_emptypage.png)
 
 我们来填充一些内容。创建一个Podfile文件,并填写如下内容:
 ```
@@ -238,19 +242,7 @@ else{
 
 这个`map`(映射)非常有意思。序列中的每一个元素，都会创建一个新的`FRPPhotoModel`对象、设置它然后返回它。为每一个`results[ @"photos" ]`的数组元素创建了一个`FRPPhotoModel`数组。这个数组就是随着subject发送过来的值。最后我们发送一个完成值`completedValue`好让订阅者们知道任务完成了。
 
-|原始值| 映射 | 映射值 |
-| :---: | :---: | :---:|
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-| {values} | map | FRPPhotoModel |
-
+![value_photoModel_map](../images/value_photoModel_map.png)
 
 注意在信号上手动附送值的能力是非典型的，这是RACSubject实例的专属能力。
 
@@ -300,7 +292,7 @@ else{
  - 然后，将这些符合要求的字典做一次映射来提取字典中`url`字段的内容。
  - 最后，我们获得一个NSString 对象的序列，把它转化为数组，然后返回`firstObject`.
 
-> 这里插图一个
+![error_handling](../images/error_handling.png)
 
 在ReactiveCocoa中类似上面的链式调用非常常见。值从`rac_sequence`推送到`filter:`方法中，最后推送到`map:`方法里。最后调用序列`rac_sequence`的`array`方法，将序列的结果转化为`array`.
 
@@ -475,7 +467,7 @@ static NSString * CellIdentifier = @"Cell";
 	}];
 ```
 
-> 插入一个插图
+![chained_signal](../images/chained_signal.png)
 
 信号由`RACObserver`这个C的宏生成，这个宏简单地返回一个监控目标对象关键路径值变化的信号。在我们这个例子中，我们的目标对象是`photoModel`，关键路径为`thumbnailData`属性。我们过滤掉所有的nil值，然后对过滤后的值做映射：把NSData实例转为UIImage对象。
 
@@ -498,7 +490,7 @@ thumbnailData属性根本不需要在这里设置，他可以在稍后的某个�
 
 这个方法在Cell被复用之前调用。如果现在运行我的应用，我们可以看到下面的结果：
 
-> 插图
+![disposing_subscription_works](../images/disposing_subscription_works.png)
 
 太好了！我们可以通过滚动视图来证实我们手动处理订阅的有效性。
 
