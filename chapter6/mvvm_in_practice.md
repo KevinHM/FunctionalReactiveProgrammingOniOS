@@ -305,6 +305,61 @@ self.title = [self.viewModel.initialPhotoModel photoName];
 
 ```
 
+该`model`和`photoImage`属性的用法已经解释过了。`photoName`事实上作为属性在代码库的其他地方被用来设置一些东西，类似于分页视图控制器的标题这样。你可以下载Github的代码库了解详情。我们来看一下实现：
+
+```Objective-C
+#import "FRPPhotoViewModel.h"
+
+//Utilities
+#import "FRPPhotoImporter.h"
+#import "FRPPhotoModel.h"
+
+@interface FRPPhotoViewModel ()
+
+@property (nonatomic, strong) UIImage *photoImage;
+@property (nonatomic, assign, getter = isLoading) BOOL loading;
+
+@end
+
+@implementation FRPPhotoViewModel
+
+- (instancetype)initWithModel:(FRPPhotoModel *)photoModel {
+	self = [super initWithModel:photoModel];
+	if(!self) return nil;
+	
+	@weakify(self);
+	[self.didBeComeActiveSignal subscribeNext:^(id x) {
+		@strongify(self);
+		self.loading = YES;
+		[[FRPPhotoImporter fetchPhotoDetails:self.model] subscribeError:^(NSError *error) {
+			NSLog(@"Could not fetch photo details: %@",error);
+		} completed:^{
+			self.loading = NO;
+			NSLog(@"Fetched photoDetails.");
+		}];
+	}];
+	
+	RAC(self, photoImage) = [RACObserve(self.model, fullsizedData) map:^id (id value) {
+		return [UIImage imageWithData:value];
+	}];
+	
+	return self;
+}
+
+- (NSString *)photoName {
+	return self.model.photoName;
+}
+
+@end
+
+
+```
+
+该`didBecomeActive`信号订阅带有"函数副作用"的加载照片详情包括它的高清图片的数据。然后`photoImage`属性与模型的映射结果绑定。
+
+使用`didBecomeActiveSignal`这种方法来启动一些像网络操作这样昂贵的任务，远远优于我们早前在初始化方法中启动他们的方法。
+
+这就是在本书中我们将要涉及的全部内容，更多详情请参考[functional reactive pixels](https://github.com/ashfurrow/FunctionalReactivePixels)，这个代码库包含了更多的在图片详情视图控制器和登陆视图控制器中使用视图模型的例子。这些Demo将向你展示如何有效地使用`ReactiveCocoa`执行网络操作和使用`RACCommands`响应用户界面交互。
 
 
 
