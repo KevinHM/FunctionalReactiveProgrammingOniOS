@@ -1,27 +1,27 @@
 # 流和序列
 流是值的序列化的抽象，你可以认为一个流就像一条水管，而值就是流淌在水管中的水，值从管道的一端流入从另一端流出。当值从管道的另一端流出的时候，我们可以读取过去所有的值，甚至是刚刚进入管道的值(即当前值)。接下来让我们拭目以待！
 呃，值的序列化，那是什么鬼？以我们当前的认知水平来说，她就像是一个数组，一个列表。事实上，使用`rac_sequeuece`我们能够轻松地将数组转化为一个流:
-```
+```Objective-C
 NSArray *array = @[ @1, @2, @3 ];
 RACSequence * stream = [array rac_sequence];
 ```
 等一下！`Sequences`？我以为我们在处理`Stream`? 好吧，说明一下，`Sequences`是两种特定类型的流的一种，实际上，`RACSequence`是一个`RACStream`的子类。
 我们能用流做什么呢?好吧，我将使用流来展示上一章中提到的例子。应用在平方数映射上:
-```
+```Objective-C
 [stream map:^id (id value){
     return @(pow([value integerValue], 2));
 }];
 ```
 注意，跟数组一样，流不能包含nil元素。[译者注:NSArray中以nil作为结束标示，stream也一样]。
 非常好！但是流映射后还是流，我们怎么样才能得到数组呢？幸运的是,`RACSequence`有一个方法返回数组:`array`。
-```
+```Objective-C
 NSLog(@"%@",[stream array]);
 ```
 这会打印映射后的数组。比起直接使用`RXCollections`这多出了几个步骤，但这里我只想说明使用流也可以达成任务。
 
 当然，我们可以合并上面的方法调用来避免污染变量的作用域.
 
-```
+```Objective-C
 NSLog(@"%@",[[[array rac_sequence] map:^id (id value){
                     return @(pow([value integerValue], 2));
                 }] array]);
@@ -35,14 +35,14 @@ NSLog(@"%@",[[[array rac_sequence] map:^id (id value){
 序列，默认情况下是延迟加载的(也称：懒加载或被动加载)，是`pull-driven`的，在他们被生成的时候就会提供确切的值，而数组方法会强制给序列的每一个成员赋值。
 
 我们来看一下`filtering`。为了使用ReactiveCocoa来过滤我们的数组，我们需要再一次把它序列化以便于使用过滤。
-```
+```Objective-C
 NSLog(@"%@", [[[array rac_sequence] filter:^BOOL (id value){
                         return [value integerValue] % 2 == 0;
                     }] array]);
 ```
 最后看一下怎么让一个序列流合并为单个值(`folding`)：
 
-```
+```Objective-C
 NSLog(@"%@",[[[array rac_sequence] map:^id (id value){
                     return [value stringValue];
                 }] foldLeftWithStart:@"" reduce:^id (id accumulator, id value){
