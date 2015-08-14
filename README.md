@@ -13,7 +13,7 @@ Functional reactive programming introduction using ReactiveCocoa - By AshFurrow
 译者为:
 [kevinHM](https://github.com/KevinHM)
 
-如果在阅读过程中发现有什么问题，请到[这里](https://github.com/KevinHM/FunctionalReactiveProgrammingOniOS)(本书在Github上的地址)开issue,我会尽快改正。
+如果在阅读过程中发现有什么问题，请到[这里(本书在Github上的地址)](https://github.com/KevinHM/FunctionalReactiveProgrammingOniOS)开issue,我会尽快改正。
 
 
 以下为本书的目录索引：

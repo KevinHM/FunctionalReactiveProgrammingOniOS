@@ -1,4 +1,5 @@
 # 引入ReactiveCocoa
+
 &nbsp;&nbsp;ReactiveCocoa有两种引入的方式:使用CocoaPods或者作为项目的一个字模块(直接拽入项目中)。ReactiveCocoa官方是不支持CococaPods的，但是开源社区提供了这样的服务，我们可以使用她。如果你乐于让ReactiveCocoa作为一个子模块引入到项目中，你可以下载2.x版本并根据官方的介绍来配置她。
 
 &nbsp;&nbsp;使用CocoaPods来引入ReactiveCocoa：打开前面我们创建的`Podfile`文件，并删除`RXCollections`行，用`pod 'ReactiveCocoa', '2.0'`替代掉。你的`Podfile`文件看起来应该是这样的:

@@ -1,4 +1,5 @@
 # 使用RXCollections
+
 我的朋友RobRix使用OC写了一个优秀的高阶函数的库叫做[RXCollections](https://github.com/robrix/RXCollections) (译者注：目前这个项目作者已经停止维护，取而代之是RobRix的另外一个项目[Reducers](https://github.com/robrix/Reducers))
 
 首先，我们需要一个可以展示的Xcode工程，创建一个新工程“Playground”。选择"Single View Application"作为模板。我们将在AppDelegate中展示绝大部分代码。在本书中，我将使用"FRP"作为类的前缀。

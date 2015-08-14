@@ -1,5 +1,7 @@
 # 高阶折叠
+
 Flod 是一个有趣的高阶函数－她把列表中的所有元素变成一个值。一个简单的高阶折叠能够用来给数值数组求和。
+
 ```
 NSNumber * sum = [array rx_foldWithBlock:^ id (id memo , id each){
     return @([memo integerValue] + [each integerValue]);

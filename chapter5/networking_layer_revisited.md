@@ -2,7 +2,7 @@
 
 还有一个机会来进一步接受我们函数反应型编程的理念，那就是我们的网络层 `FRPPhotoImporter`,我们先来看看下载图片的方法：
 
-```
+```objective-c
 + (void)downloadThumbnailForPhotoModel:(FRPPhotoModel *)photoModel {
 	[self download:photoModel.thumbnailURL withCompletion:^(NSData *data) {
 		photoModel.thumbnailData = data;

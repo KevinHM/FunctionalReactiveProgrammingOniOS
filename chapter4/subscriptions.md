@@ -1,4 +1,5 @@
 # 订阅
+
 当你随时都想知道某一个值的改变时(不管是next、error或者completion),你就会订阅流---一种最常见的signal.使用信号通常都会有副作用，比如下面这个例子。
 
 &nbsp;&nbsp;我们添加一个textfield控件到viewController's View上，这里我使用storyboard来做，你怎么做随你喜好。

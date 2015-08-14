@@ -1,5 +1,7 @@
 # 高阶过滤
+
 谈到ReactiveCocoa，我们要使用的另一种关键的高阶函数就是过滤器。一个列表通过过滤能够返回一个只包含了原列表中符合条件的元素的新列表，具体我们来看实践中的例子:
+
 ```
 NSArray *filteredArray = [array rx_filterWithBlock:^BOOL(id each){
     return ([each integerValue] % 2 == 0);

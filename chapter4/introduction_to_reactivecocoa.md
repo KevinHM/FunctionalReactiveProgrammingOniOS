@@ -1,2 +1,3 @@
 # ReactiveCocoa 简介
+
 上一章我们学习了函数方法:map、filter以及fold,我们将再次熟悉她们。但是这一章是围绕着ReactiveCocoa和函数响应式编程来展开的，学习之前需要做一点点补充说明。

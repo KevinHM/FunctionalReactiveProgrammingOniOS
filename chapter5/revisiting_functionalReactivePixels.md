@@ -1,4 +1,5 @@
 # 和FunctionalReactivePixels一起实践
+
 上一节，我们很多次使用了`ReactiveCocoa`的关键部分，这里有更多的机会来使用`ReactiveCocoa`整个代码库。开始吧！
 
 首先在我们的画廊视图控制器中实现三个不同的代理方法：`CollectionViewDataSource`、`CollectionViewDelegate`、高清图视图控制器的`PhotoViewControllerDelegate`

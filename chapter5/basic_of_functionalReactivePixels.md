@@ -1,4 +1,5 @@
 # FunctionalReactivePixels的基础知识
+
 FunctionReactivePixels将会是一个简单的观看'500px'中最受欢迎的照片的应用。一旦我们完成这一节，应用的主界面将会像下面这样：
 
 ![app_main_page](../images/app_main_page.png)

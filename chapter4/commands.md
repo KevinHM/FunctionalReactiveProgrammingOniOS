@@ -1,4 +1,5 @@
 # 指令
+
 上一节，我们绑定UIButton的enabled属性并不是最佳实践，因为UIButton增加了一个ReactiveCocoa的类和一条指令。在这一节中我们将介绍ReactiveCocoa的指令。实际上button的rac_command可以为我们监控enabled属性。
 应用一段ReactiveCocoa的文档:
 > 指令，RACCommand类的代表，创建并订阅动作的信号响应，可以很容易地实现一些用户与应用交互时的边界效果。
