@@ -26,7 +26,7 @@ RACSignal * validEmailSignal = [self.textField.rac_textSignal map:^id (NSString 
 
 RAC(self.button, enabled) = validEmailSignal;
 
-RAC(self.button, textColor) = [validEmailSignal map: ^id (id value){
+RAC(self.textField, textColor) = [validEmailSignal map: ^id (id value){
     if([value boolValue]){
         return [UIColor greenColor];
     }else{
