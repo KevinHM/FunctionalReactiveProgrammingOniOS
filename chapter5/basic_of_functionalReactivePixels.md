@@ -163,7 +163,7 @@ self.apiHelper = [[PXAPIHelper alloc]
     								[self downloadThumbnailForPhotoModel:model];
 
     								return model;
-    							}] array];
+    							}] array]];
 
     							[subject sendCompleted];
     						}
